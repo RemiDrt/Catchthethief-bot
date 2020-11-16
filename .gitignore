@@ -1,0 +1,6 @@
+#ingoring all object files
+*.o
+#ignoring the makefile
+Makefile
+#the compiled file
+scriptCTT
