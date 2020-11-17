@@ -4,61 +4,50 @@
 #define MAX_J 5
 
 void RecupererInit(int* nj, int* j){
+    /*Récuperer les input de début de partie*/
     fscanf(stdin, "%d%d", nj, j);
 }
 
-void RecupererEntier(int *na){
-    fscanf(stdin, "%d", na);
+void RecupererEntier(int *n){
+    /*Récupérer un entier n en entrée standard*/
+    fscanf(stdin, "%d", n);
 }
 
-void RecupererInfosJoueurs(int nj, int infos[][3]){
-    for(int i = 0; i < nj; i++){
+void Recuperer3Infos(int nblignes, int infos[][3]){
+    /*Récuperer 3 entiers en entrée standard nblignes fois*/
+    for(int i = 0; i < nblignes; i++){
         fscanf(stdin, "%d %d %d", &infos[i][0], &infos[i][1], &infos[i][2]);
     }
 }
 
-void RecupererInfosAgents(int na, int infos[][5]){
-    for(int i = 0; i < na; i++){
+void Recuperer5Infos(int nblignes, int infos[][5]){
+    /*Récuperer 5 entiers en entrée standard nblignes fois*/
+    for(int i = 0; i < nblignes; i++){
         fscanf(stdin, "%d %d %d %d %d", &infos[i][0], &infos[i][1], &infos[i][2], &infos[i][3], &infos[i][4]);
     }
 }
 
-void RecupererInfosVoleursA(int nva, int infos[][2]){
-    for(int i = 0; i < nva; i++){
+void Recuperer2Infos(int nblignes, int infos[][2]){
+    /*Récuperer 2 entiers en entrée standard nblignes fois*/
+    for(int i = 0; i < nblignes; i++){
         fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
     }
 }
 
-void RecupererInfosCasesS(int ns, int infos[][2]){
-    for(int i = 0; i < ns; i++){
-        fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
-    }
-}
-
-void RecupererInfosSurv(int surv, int infos[][2]){
-    for(int i = 0; i < surv; i++){
-        fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
-    }
-}
-
-void RecupererInfosScientifique(int ni, int infos[][2]){
-    for(int i = 0; i < ni; i++){
-        fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
-    }
-}
 
 void RecupererInputTour(int nj, int* na, int* nva, int* ns, int* surv, int* ni, int infosJ[][3], int infosA[][5], int infosVA[][2], int infosS[][2], int infosSurv[][2], int infosSci[][2]){
-    RecupererInfosJoueurs(nj, infosJ);
-    RecupererEntier(na);
-    RecupererInfosAgents(*na, infosA);
-    RecupererEntier(nva);
-    RecupererInfosVoleursA(*nva, infosVA);
-    RecupererEntier(ns);
-    RecupererInfosCasesS(*ns, infosS);
-    RecupererEntier(surv);
-    RecupererInfosSurv(*surv, infosSurv);
-    RecupererEntier(ni);
-    RecupererInfosScientifique(*ni, infosSci);
+    /*Récuperer l'ensemble des input d'un tour*/
+    Recuperer3Infos(nj, infosJ); //Récuperer infos joueurs
+    RecupererEntier(na); //Récuperer nombre d'agents
+    Recuperer5Infos(*na, infosA); //Récuperer infos agents
+    RecupererEntier(nva); //Récuperer nombre de voleurs attrapés
+    Recuperer2InfosVoleursA(*nva, infosVA); //Récuperer infos cases avec voleurs attrapés
+    RecupererEntier(ns); //Récuperer nombre de cases scellées
+    Recuperer2InfosCasesS(*ns, infosS); //Récuperer infos cases scellées
+    RecupererEntier(surv); //Récuperer nombre d'agents de surveillance du joueurs dans un escalier
+    Recuperer2InfosSurv(*surv, infosSurv); //Récuperer infos nobres de voleurs situés à un étage d'agent de surv (qui est a l'escalier)
+    RecupererEntier(ni); //Récuperer nombre d'infos envoyées par police scientifique
+    Recuperer2InfosScientifique(*ni, infosSci); //Récuperer infos police scientifique
 }
 
 int main(void) {
