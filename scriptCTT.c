@@ -3,6 +3,56 @@
 #define MAX_AGENT 10
 #define MAX_J 5
 
+typedef struct Agent Agent;
+typedef struct Joueur Joueur;
+
+struct Agent
+{
+    int id;
+    int coordo[2];
+    int spe;
+    int idJoueur;
+};
+
+
+struct Joueur
+{
+    int numero;
+    int score;
+    Agent agents[2];
+    int end;
+};
+
+int CoordoEstValide(int x, int y){
+    /* 
+        Retourne 1 si la coordonnée (x,y) est valide, 0 sinon
+        Une coordonée est valide si elle est entre (0,0) et (9,9)
+    */
+    return (x >= 0 && x <= 9) && (y >= 0 && y <= 9);
+    
+}
+
+int CoordoEstUneChambre(int x, int y){
+    /*
+        Retourne 1 si la coordonée est valide et elle coorespond à une chambre
+        les x représentent les étages, les chambres se retrouvent pour y entre 1 et 8
+        y = 9 et y = 0 représente un escalier
+        retourne 0 sinon
+    */
+   return CoordoEstValide(x, y) && (y >= 1 && y <= 8);
+
+}
+
+int CoordoEstUnEscalier(int x, int y){
+    /*
+        Retourne 1 si la coordo est valide et elle correspond à un escalier
+        retourne 0 sinon
+    */
+   return CoordoEstValide(x, y) && !(CoordoEstUneChambre(x, y));
+
+}
+
+
 void RecupererInit(int* nj, int* j){
     /*Récuperer les input de début de partie*/
     fscanf(stdin, "%d%d", nj, j);
@@ -48,6 +98,12 @@ void RecupererInputTour(int nj, int* na, int* nva, int* ns, int* surv, int* ni, 
     Recuperer2Infos(*surv, infosSurv); //Récuperer infos nobres de voleurs situés à un étage d'agent de surv (qui est a l'escalier)
     RecupererEntier(ni); //Récuperer nombre d'infos envoyées par police scientifique du joueur
     Recuperer2Infos(*ni, infosSci); //Récuperer infos police scientifique
+    /*
+        pour gagner du temps on peut essayer de faire les différentes manipulation sur les données entre la réception des input
+        Ca evite de le faire apres quand le prog attend la réponse (on a 1s pour répondre)
+    */ 
+    
+
 }
 
 int main(void) {
@@ -58,7 +114,7 @@ int main(void) {
     int infosS[MAX_AGENT][2];
     int infosSurv[MAX_AGENT][2];
     int infosSci[MAX_AGENT][2];
-
+    
     //récupérer des entrées
     RecupererInit(&nj, &j);
 
@@ -105,5 +161,10 @@ int main(void) {
     }
     else {
         fprintf(stderr, "impossible d'ouvrir le fichier souhaité\n");
+    }
+    for (int i = -1; i <= 10; i++){
+        for(int y = -1; y <= 10; y++){
+            printf("i=%d | y=%d | valide ? %d | chambre ? %d | escalier ? %d\n", i, y, CoordoEstValide(i, y), CoordoEstUneChambre(i, y), CoordoEstUnEscalier(i, y));
+        }
     }
 }
