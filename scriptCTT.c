@@ -41,13 +41,13 @@ void RecupererInputTour(int nj, int* na, int* nva, int* ns, int* surv, int* ni, 
     RecupererEntier(na); //Récuperer nombre d'agents
     Recuperer5Infos(*na, infosA); //Récuperer infos agents
     RecupererEntier(nva); //Récuperer nombre de voleurs attrapés
-    Recuperer2InfosVoleursA(*nva, infosVA); //Récuperer infos cases avec voleurs attrapés
+    Recuperer2Infos(*nva, infosVA); //Récuperer infos cases avec voleurs attrapés
     RecupererEntier(ns); //Récuperer nombre de cases scellées
-    Recuperer2InfosCasesS(*ns, infosS); //Récuperer infos cases scellées
+    Recuperer2Infos(*ns, infosS); //Récuperer infos cases scellées
     RecupererEntier(surv); //Récuperer nombre d'agents de surveillance du joueurs dans un escalier
-    Recuperer2InfosSurv(*surv, infosSurv); //Récuperer infos nobres de voleurs situés à un étage d'agent de surv (qui est a l'escalier)
-    RecupererEntier(ni); //Récuperer nombre d'infos envoyées par police scientifique
-    Recuperer2InfosScientifique(*ni, infosSci); //Récuperer infos police scientifique
+    Recuperer2Infos(*surv, infosSurv); //Récuperer infos nobres de voleurs situés à un étage d'agent de surv (qui est a l'escalier)
+    RecupererEntier(ni); //Récuperer nombre d'infos envoyées par police scientifique du joueur
+    Recuperer2Infos(*ni, infosSci); //Récuperer infos police scientifique
 }
 
 int main(void) {
@@ -70,7 +70,37 @@ int main(void) {
     if (fichier != NULL){
         fprintf(fichier, "entrée recup\n");
         fprintf(fichier, "initialisation : ");
-        fprintf(fichier, "%d %d\n", nj, j);
+        fprintf(fichier, " nj j = %d %d\n", nj, j);
+        fprintf(fichier, "Pendant le tour : \n");
+        fprintf(fichier, "infos joueurs : \n");
+        for(int i = 0; i < nj; i++){
+            fprintf(fichier, "J C END : %d %d %d\n", infosJ[i][0], infosJ[i][1], infosJ[i][2]);
+        }
+        fprintf(fichier, "nb agent : %d\n", na);
+        fprintf(fichier, "infos agents : \n");
+        for(int i = 0; i < na; i++){
+            fprintf(fichier, "ID J F C S : %d %d %d %d %d\n", infosA[i][0], infosA[i][1], infosA[i][2], infosA[i][3], infosA[i][4]);
+        }
+        fprintf(fichier, "Nb voleurs attrapés tours préc : %d\n", nva);
+        fprintf(fichier, "Infos voleurs attrapés : \n");
+        for(int i = 0; i < nva; i++){
+            fprintf(fichier, "coordonnées : %d,%d\n", infosVA[i][0], infosVA[i][1]);
+        }
+        fprintf(fichier, "Nb cases scellees dernier tour: %d\n", ns);
+        fprintf(fichier, "Infos cases : \n");
+        for(int i = 0; i < nva; i++){
+            fprintf(fichier, "coordonnées : %d,%d\n", infosS[i][0], infosS[i][1]);
+        }
+        fprintf(fichier, "Nb agent de surv a un escalier : %d\n", surv);
+        fprintf(fichier, "Infos envoyés : \n");
+        for(int i = 0; i < nva; i++){
+            fprintf(fichier, "etage nb voleurs a l'etage : %d,%d\n", infosSurv[i][0], infosSurv[i][1]);
+        }
+        fprintf(fichier, "Nb infos envoyés par agent scientifique : %d\n", ni);
+        fprintf(fichier, "Infos chambre qui a ete fouillé si y a eu un voleur : \n");
+        for(int i = 0; i < nva; i++){
+            fprintf(fichier, "coordo : %d,%d\n", infosSci[i][0], infosSci[i][1]);
+        }
         fclose(fichier);
     }
     else {
