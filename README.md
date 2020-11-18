@@ -5,5 +5,6 @@ Ce bot va récuperer en input les informations que le jeu lui envoit à chaque t
 Il va ensuite envoyer vers la sortie standard, à chaque tour, les mouvements qu'il souhaite faire pour attraper les voleurs<br>
 <br>
 Utiliser le Makefile pour compiler simplement -> commande make
-<br><br>
+<br>
+<br>
 Projet algorithmique et programmation ENSIIE FISA 1A 2020-2021<br>
