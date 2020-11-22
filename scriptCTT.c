@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX_AGENT 10
-#define MAX_J 5
+#define MAX_AGENT 8
+#define MAX_J 4
 
 typedef struct Agent Agent;
 typedef struct Joueur Joueur;
@@ -9,17 +9,31 @@ typedef struct Joueur Joueur;
 struct Agent
 {
     int id;
-    int coordo[2];
+    int coordoPrec[2];
+    int coordoActu[2];
     int spe;
     int idJoueur;
 };
+
+void initAgent(Agent* a, int id, int J, int x, int y, int s){
+    /*Toutes les infos ici sont des infos qui proviennes des scanf et sont en théorie toutes valides*/
+    /*Initialiser un agent*/
+    a->id = id;
+    a->coordoActu[0] = x;
+    a->coordoActu[1] = y;
+    /*Quand on initialise un agent, au tour 1 les coordo précedentes et les coordo actuelles sont les mêmes*/
+    a->coordoPrec[0] = x;
+    a->coordoPrec[1] = y;
+    a->spe = s;
+    a->idJoueur = J;
+}
 
 
 struct Joueur
 {
     int numero;
     int score;
-    Agent agents[2];
+    Agent* agents[2]; //je sais pas comment ca marche mais dans le doute je veux pas que ce soit une copie de l'agent original mais bien un pointeur ver sl'agent original
     int end;
 };
 
@@ -52,6 +66,9 @@ int CoordoEstUnEscalier(int x, int y){
 
 }
 
+int CoordoIdentique(int x1, int y1, int x2, int y2){
+    return (x1 == x2) && (y1 == y2);
+}
 
 void RecupererInit(int* nj, int* j){
     /*Récuperer les input de début de partie*/
@@ -161,10 +178,5 @@ int main(void) {
     }
     else {
         fprintf(stderr, "impossible d'ouvrir le fichier souhaité\n");
-    }
-    for (int i = -1; i <= 10; i++){
-        for(int y = -1; y <= 10; y++){
-            printf("i=%d | y=%d | valide ? %d | chambre ? %d | escalier ? %d\n", i, y, CoordoEstValide(i, y), CoordoEstUneChambre(i, y), CoordoEstUnEscalier(i, y));
-        }
     }
 }
