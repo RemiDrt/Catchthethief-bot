@@ -5,6 +5,11 @@
 
 typedef struct Agent Agent;
 typedef struct Joueur Joueur;
+typedef struct Partie Partie;
+typedef struct InfosPub InfosPub;
+typedef struct InfosPriv InfosPriv;
+
+
 
 struct Agent
 {
@@ -36,6 +41,38 @@ struct Joueur
     Agent* agents[2]; //je sais pas comment ca marche mais dans le doute je veux pas que ce soit une copie de l'agent original mais bien un pointeur ver sl'agent original
     int end;
 };
+
+struct InfosPub
+{
+    Joueur* infosJ[MAX_J];//les infos sur les ensembles des joueurs qui vont etres maj a chaque tour
+    Agent* infosA[MAX_AGENT];//pareil pour les agents
+    int infosVa[MAX_AGENT][2];//infos coordo des Voleurs attrapés
+    int infosSDT[MAX_AGENT][2];//coordo des cases des scéllées au dernier tour
+    int infosS[64][2]; //coordos de l'ensembles des cases scéllés(max 64 cases scelles) 
+};
+
+struct InfosPriv
+{
+    int nbSurv;
+    int infosSurv[2][2];
+    int nbNI;
+    int infosNI[2][2];
+};
+
+
+struct Partie
+{
+    int tour;
+    int nbJoueur;
+    int nbAgent;
+    int nbVoleursA;
+    int nbVoleursADT;
+    int nbCasesS;
+    int nbCasesSDT;
+    InfosPriv* priv;
+    InfosPub* pub;
+};
+
 
 int CoordoEstValide(int x, int y){
     /* 
