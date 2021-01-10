@@ -62,7 +62,8 @@
             Si l'étage contient des voleur mais le rapide n'est pas présent il y a 2 cas : - le rapide est dans l'escalier dans ce cas il rejoindre le bon etage. -il est dans un etage et doit donc rejiondre l'escalier.
             Si l'étage ne contient pas de voleur le serveillance va monter/descendre. Si le rapide n'est pas au meme etage il y a les 2 mêmes cas que précédement. S'il était au même étage il va aussi aller au prochain étage comme le surveillance.
             A recommencer tant que la partie n'est pas fini. Si le rapide est arrivé au bout d'un étage on change son mode d'action pour le faire faire demie tour. Même principe pour le surveillance s'il arrive au 9 étage ou au 0, on le fait faire demie tour
-
+    
+    J'ai aussi géré le code sur git : https://github.com/RemiDrt/Catchthethief-bot
 
 */
 
