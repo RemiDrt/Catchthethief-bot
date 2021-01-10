@@ -575,7 +575,7 @@ int main(void) {
                         //pour l'agent rapide il y a plusieurs solution : soit il est a l'escalier et il doit rejoindre le même étage, soit il doit rejoindre l'escalier
                         if (EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))//cas ou il faut juste rejoindre le même étage
                         {
-                            fprintf(stdout, "MOVE %d %d %d; ", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, x1Suiv, p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1]); 
+                            fprintf(stdout, "MOVE %d %d 9; ", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, x1Suiv); 
                         }
                         else
                         {
