@@ -309,8 +309,9 @@ int main(void) {
     */
 
     while(fin){
-       p.tour++;
-       fin = ;
+        RecupererInputTour(&p);
+        p.tour++;
+        fin = ;
    }
     RecupererInputTour(&p);
 
