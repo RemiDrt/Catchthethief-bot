@@ -84,15 +84,15 @@ void initJoueur(Joueur* j){
 void initPub(InfosPub* pub, int nbJoueurs){
     for(int i = 0; i < 2 * nbJoueurs; i++){
         if((i%2) == 0){//une fois sur 2 on init un Joueur
-            Joueur* j = (Joueur)malloc(sizeof(Joueur));
+            Joueur* j = (Joueur*)malloc(sizeof(Joueur));
             initJoueur(j);
             pub->infosJ[i] = j;//on pointe la case du tableau vers le joueurs qu'on a init (et biensur il a sa memoire alloué)
         }
-        Agent* a = (Agent)malloc(sizeof(Agent));
-        init(a);
+        Agent* a = (Agent*)malloc(sizeof(Agent));
+        initAgent(a);
         pub->infosA[i] = a;//même principe que pour les joueurs mais comme y a max 2 agents par joueurs on le fait a chaque fois
         for(int y = 0; y < 2 * nbJoueurs; y ++){
-            pub->infosA[i][y] = -1;
+            pub->infosVa[i][y] = -1;
             pub->infosSDT[i][y] = -1;
         }
     }
@@ -118,8 +118,8 @@ void initPartie(Partie* p, InfosPriv* priv, InfosPub* pub){
     p->nbCasesSDT = 0;
     p->priv = priv;
     p->pub = pub;
-    initInfosPriv(priv);
-    initInfosPub(pub, nbJoueurs);
+    initPriv(priv);
+    initPub(pub, p->nbJoueur);
 }
 
 
@@ -209,7 +209,7 @@ void RecupererInfosCasesScellees(int casesScellees[][2] , int nbCasesScelleesTou
     }
 }
 
-void RecupererInfosPriv(int infos[][], int nbInfos){
+void RecupererInfosPriv(int infos[][2], int nbInfos){
     /*Récupérer les informations privés (recuperer 2 entier dans un tableau nbInfos fois)*/
     for(int i = 0; i < nbInfos; i++){
         fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
@@ -244,18 +244,18 @@ void RecupererInputTour(Partie* p){
     RecupererInfosJoueurs(p->pub->infosJ, p->nbJoueur);
 
     RecupererEntier(&(p->nbAgent));
-    RecupererInfosAgents(p->pub->infosA, p->nbAgent);
+    RecupererInfosAgents(p->pub->infosA, p->nbAgent, p->tour);
 
     /*associer le joueurs a ces agents*/
 
     RecupererEntier(&(p->nbVoleursADT));
-    RecupererInfosVoleursAttrapes(p->pub->infosVa, p->nbVoleursADT);
+    RecupererInfosVoleursAttrapes(p->pub->infosVa, p->nbVoleursADT, p->nbVoleursA);
     /**traiter les infos**/
     p->nbVoleursA = p->nbVoleursA + p->nbVoleursADT;
     /*********************/
 
     RecupererEntier(&(p->nbCasesSDT));
-    RecupererInfosCasesScellees(p->pub->infosSDT, p->nbCasesSDT);
+    RecupererInfosCasesScellees(p->pub->infosSDT, p->nbCasesSDT, p->nbCasesS);
     /**traiter les infos**/
     p->nbCasesS = p->nbCasesS + p->nbCasesSDT;
     /*********************/
@@ -295,67 +295,88 @@ void RecupererInputTour(Partie* p){
 
 }*/
 
+void afficherAgent(FILE* f, Agent* a){
+    fprintf(f, "agent %p : %d | (%d,%d) | (%d, %d) | %d | %d\n", a, a->id, a->coordoPrec[0], a->coordoPrec[1], a->coordoActu[0], a->coordoActu[1], a->spe, a->idJoueur);
+}
+
+void afficherJoueur(FILE* f, Joueur* j){
+    fprintf(f, "joueur %p : %d | %d | %p | %p | %d", j, j->numero, j->score, j->agents[0], j->agents[1], j->end);
+}
+
+void afficherTabDouble(FILE* f,int tab[][2], int dim){
+    for(int i = 0; i < dim; i++){
+        for(int y = 2; y < 2; y++){
+            fprintf(f, "%d |", tab[i][y]);
+        }      
+    }
+    fprintf(f, "\n");
+}
+
+void afficherPriv(FILE* f, InfosPriv* priv){
+    fprintf(f, "priv : %d | %d\n", priv->nbSurv, priv->nbNI);
+    afficherTabDouble(f, priv->infosSurv, 2);
+    afficherTabDouble(f, priv->infosNI, 2);
+}
+
+void afficherPub(FILE* f, InfosPub* pub, int nbJoueurs, int VA, int CSDT){
+    fprintf(f, "pub : \n");
+    afficherTabDouble(f, pub->infosVa, VA);
+    afficherTabDouble(f, pub->infosSDT, CSDT);
+    for(int i = 0; i < nbJoueurs; i++){
+        afficherJoueur(f, pub->infosJ[i]);
+    }
+    for(int i = 0; i < 2 * nbJoueurs; i++){
+        afficherAgent(f, pub->infosA[i]);
+    }
+}
+
+void afficherPartie(FILE* f, Partie* p){
+    fprintf(f, "p : %d | %d | %d | %d | %d | %d | %d | %d \n", p->tour, p->numeroJoueur, p->nbJoueur, p->nbAgent, p->nbVoleursA, p->nbVoleursADT, p->nbCasesS, p->nbCasesSDT);
+    afficherPriv(f, p->priv);
+    afficherPub(f, p->pub, p->nbJoueur, p->nbVoleursADT, p->nbCasesSDT);
+}
+
 int main(void) {
     Partie p;
     InfosPriv priv;
     InfosPub pub;
     int fin; //variable pour détecter la fin du jeux
     //récupérer des entrées
-    RecupererInit(&(p->nbJoueur), &(p->numeroJoueur));
+    RecupererInit(&(p.nbJoueur), &(p.numeroJoueur));
     initPartie(&p, &priv, &pub);
 
     /*A partir d'ici on a créer nbJoueur Joueur et 2*nbJoueur Agent
     *leurs pointeurs sont stockés dans les tableau correspondant dans pub
     */
 
-    while(fin){
-        RecupererInputTour(&p);
-        p.tour++;
-        fin = ;
-   }
-    RecupererInputTour(&p);
-
-    //ecrire dans un fichier
+    /*fichier pour debug*/
     FILE* fichier = NULL;
     fichier = fopen("test.txt", "w");
-    /*if (fichier != NULL){
-        fprintf(fichier, "entrée recup\n");
-        fprintf(fichier, "initialisation : ");
-        fprintf(fichier, " nj j = %d %d\n", nj, j);
-        fprintf(fichier, "Pendant le tour : \n");
-        fprintf(fichier, "infos joueurs : \n");
-        for(int i = 0; i < nj; i++){
-            fprintf(fichier, "J C END : %d %d %d\n", infosJ[i][0], infosJ[i][1], infosJ[i][2]);
+
+    if (fichier != NULL)
+        {
+            afficherPartie(fichier, &p);
         }
-        fprintf(fichier, "nb agent : %d\n", na);
-        fprintf(fichier, "infos agents : \n");
-        for(int i = 0; i < na; i++){
-            fprintf(fichier, "ID J F C S : %d %d %d %d %d\n", infosA[i][0], infosA[i][1], infosA[i][2], infosA[i][3], infosA[i][4]);
+        else
+        {
+            fprintf(stderr, "erreur ouverture fichier\n");
         }
-        fprintf(fichier, "Nb voleurs attrapés tours préc : %d\n", nva);
-        fprintf(fichier, "Infos voleurs attrapés : \n");
-        for(int i = 0; i < nva; i++){
-            fprintf(fichier, "coordonnées : %d,%d\n", infosVA[i][0], infosVA[i][1]);
+
+    while(fin){
+        RecupererInputTour(&p);
+        fprintf(stdout, "PASS\n");
+        p.tour++;
+        fin = fin;
+        if (fichier != NULL)
+        {
+            afficherPartie(fichier, &p);
         }
-        fprintf(fichier, "Nb cases scellees dernier tour: %d\n", ns);
-        fprintf(fichier, "Infos cases : \n");
-        for(int i = 0; i < nva; i++){
-            fprintf(fichier, "coordonnées : %d,%d\n", infosS[i][0], infosS[i][1]);
+        else
+        {
+            fprintf(stderr, "erreur ouverture fichier\n");
         }
-        fprintf(fichier, "Nb agent de surv a un escalier : %d\n", surv);
-        fprintf(fichier, "Infos envoyés : \n");
-        for(int i = 0; i < nva; i++){
-            fprintf(fichier, "etage nb voleurs a l'etage : %d,%d\n", infosSurv[i][0], infosSurv[i][1]);
-        }
-        fprintf(fichier, "Nb infos envoyés par agent scientifique : %d\n", ni);
-        fprintf(fichier, "Infos chambre qui a ete fouillé si y a eu un voleur : \n");
-        for(int i = 0; i < nva; i++){
-            fprintf(fichier, "coordo : %d,%d\n", infosSci[i][0], infosSci[i][1]);
-        }
-        fclose(fichier);
+        
+        
     }
-    else {
-        fprintf(stderr, "impossible d'ouvrir le fichier souhaité\n");
-    }
-    */
+
 }
