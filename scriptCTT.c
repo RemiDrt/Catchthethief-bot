@@ -10,7 +10,7 @@
     tant qu'à un etage il y a un voleur détécté par le service de surveillance, l'agent en brigade rapide fait des aller retour de fouille chambre par chambre.
     Quand il n'y a plus / pas de voleur a l'étage, l'agent de surveillance va monter ou descendre d'étage en fonction de sa situation. S'il est parti du bas il va jusqu'en 
     haut étage par étage s'il n'y a pas de voleur à l'étage. Et arrivé en haut il redescend étage par étage en s'arrêtant s'il y a un ou plusieurs voleurs à l'étage.
-    Pour l'agent rapide. Quand il n'y a plus de voleur a l'étage, il retourne à l'escalier opposé à celui de l'autre agent et monte les étage comme l'autre agent (il le rejoint
+    Pour l'agent rapide. Quand il n'y a plus de voleur a l'étage, il retourne à l'escalier opposé à celui de l'autre agent et monte les étages comme l'autre agent (il le rejoint
     à son étage). Et s'il y a un voleur à un étage il va fouiller l'étage jusqu'à ce qu'il n'y ai plus de voleur.
  
     code :
@@ -22,7 +22,7 @@
             nombre de cases scellées au dernier tour. Elle contient de plus un pointeur vers une structure appellé InfosPub et un pointeur vers une structure
             InfosPriv.
 
-            -InfosPub : Cette structure sert a receuillir les informations publique fournis chaque tour par le jeux. On retrouve donc dedans une tableau de pointeur vers des Joueur
+            -InfosPub : Cette structure sert a receuillir les informations publique fournis chaque tour par le jeu. On retrouve donc dedans une tableau de pointeur vers des Joueur
             (structure représentant un joueur), un tableau de pointeur vers des Agent (structure représentant des agents), un tableau d'entiers à 2 dimensions afin de stocker toutes 
             les informations sur les voleurs, un tableau d'entier à 2 dimensions afin de stocker les informations sur les cases scellés mais aussi un tableau à double entrée qui doit servir 
             à stocker l'ensemble des cases scellées.
@@ -31,24 +31,39 @@
             d'agent de surveillance à un escalier d'étage et un tableau à 2 dimension d'entier qui va receuillir les informations transmises par la brigade de surveillance. Et on retrouve
             le même principe pour la brigade scientifique.
 
-            -Joueur : Cette structure représente une joueurs. Son score, son id, ces points et aussi un tableau de 2 pointeurs vers des Agents qui sont censés être les siens
+            -Joueur : Cette structure représente un joueur. Son score, son id, ces points et aussi un tableau de 2 pointeurs vers des Agents qui sont censés être les siens
 
             -Agent : Structure représentant un agent avec ces coordonnées actuelles, celles du tour précédent, sa spécialisation, son id et l'id du joueur auquel il appartient.
 
-            Donc une partie contient un pointeur vers une instance d'InfosPub et un pointeur vers une instance d'InfosPriv. InfosPub contient un tableau de <nombre de joueur> pointeur vers des instance de Joueur
+            Donc une partie contient un pointeur vers une instance d'InfosPub et un pointeur vers une instance d'InfosPriv. InfosPub contient un tableau de <nombre de joueur> pointeur vers des instances de Joueur
             et un tableau de <2 * nombre de joueurs> pointeurs vers des instances d'agents.
 
-            Au début de la partie on crée une instance de Partie une instance de InfosPub et une instance de InfosPriv, on récupère ensuite la première entrée qui donne le nombre de joueur et et notre numéros.
-            Avec cela on va pouvoir faire l'initialisatio de la structure Partie qui va pointer vers InfosPub et InfosPriv. Puis on va initialiser InfosPub qui va créer tous les agents et joueurs necessaire et pointer vers eux
+            Au début de la partie on crée une instance de Partie une instance de InfosPub et une instance de InfosPriv, on récupère ensuite la première entrée qui donne le nombre de joueur et notre numéros.
+            Avec cela on va pouvoir faire l'initialisation de la structure Partie qui va pointer vers InfosPub et InfosPriv. Puis on va initialiser InfosPub qui va créer tous les agents et joueurs necessaire et pointer vers eux
 
         Algorithmique : L'algorithmique est assez simple. Pour l'aspect de stratégie de déplacement il n'y a pas de boucle. Ce ne sont que des accès simples, et des structures if else
-        (le tout dans une boucle pour chaque tour bien sûr)
-        C'est dans la récolte et le traitement des données au début des tours de jeux que les algorithme sont un peu plus complexe.
-        Commencons par l'initialisation des structure de données pour initialiser la partie il faut initialiser les infos publiques et privées. Pour initialiser les infos publiques
-        il faut faire des boucles pour instancier les joueurs et les agents. Leur allouer de la mémoire et faire pointer vers autant d'instances que necessaire (en fonction du nombre de joueurs de la partie)
-        pour instancier tous les joueurs il faut une boucle de <nb joueurs>. Pour les agents il faut une boucle de <2 * nbJoueurs> (max 2 agents par joueurs). Mais il faut aussi initialiser les tableau
-        pour les voleurs attrapés et les cases scellees donc on va se servir de la même boucle et on se retrouve avec un algorithme de complexité O(4n^2) (2x * 2x) mais sur un gros volume de données on
-        peut neglier les 4 * donc juste O(n^2)
+            (le tout dans une boucle pour chaque tour bien sûr)
+            C'est dans la récolte et le traitement des données au début des tours de jeux que les algorithmes sont un peu plus complexe.
+            Commencons par l'initialisation des structure de données pour initialiser la partie il faut initialiser les infos publiques et privées. Pour initialiser les infos publiques
+            il faut faire des boucles pour instancier les joueurs et les agents. Leur allouer de la mémoire et faire pointer vers autant d'instances que necessaire (en fonction du nombre de joueurs de la partie)
+            pour instancier tous les joueurs il faut une boucle de <nb joueurs>. Pour les agents il faut une boucle de <2 * nbJoueurs> (max 2 agents par joueurs). Mais il faut aussi initialiser les tableaux
+            pour les voleurs attrapés et les cases scellees donc on va se servir de la même boucle et on se retrouve avec un algorithme de complexité O(4n^2) (2x * 2x) mais sur un gros volume de données on
+            peut neglier les 4 * donc juste O(n^2).
+            Pour recuperer les données tous les tours on a des boucles simples. on connait par exemple a chaque tour le nombre d'agents. Et pour chaque agents on va récuperer les informations
+            et les stocker dans la bonne structure.
+            Un algorithme interressant selon moi est celui qui permet de retrouver les agents d'un joueurs. (Algorithme de recherche dans une liste). C'est la fonction RecupererAgents
+            En connaissant l'id d'un joueurs on parcours tous les agents a la recherches des deux ayant l'id de joueur que nous cherchons et on fait pointer les pointeurs de la structure joueurs vers les agents concernés.
+            C'est une fonction qu'on repète tous les tours car le nombre d'agent peut changer avec la fin d'un joueur (qui aurait perdu) donc les agents ne sont pas stocker.
+            forcément au même indice dans le tableau des agents, il est donc important  de les retrouver chaque tour (comme les informations sont mises à jour) à de repointer vers l'endroit le bon agent.(recherche brut, element par element du premier jusqu'à ce qu'on ai trouvé les 2 agents)
+
+            Pour le déplacement des agents chaque tour l'algorithmique suis une certaine logique les 2 premiers tours sont prédéfinis. On spécialise notre agent et l'autre commence la fouille de l'étage du bas.
+            A partir du 3eme tour on suit les différentes condition. 
+            Savoir si les 2 agents sont au même étage et si l'étage contient des voleurs. Si oui le rapide commence la fouille de l'étage jusqu'à ce qu'il n'y ai plus de voleurs à l'étage.
+            Si l'étage contient des voleur mais le rapide n'est pas présent il y a 2 cas : - le rapide est dans l'escalier dans ce cas il rejoindre le bon etage. -il est dans un etage et doit donc rejiondre l'escalier.
+            Si l'étage ne contient pas de voleur le serveillance va monter/descendre. Si le rapide n'est pas au meme etage il y a les 2 mêmes cas que précédement. S'il était au même étage il va aussi aller au prochain étage comme le surveillance.
+            A recommencer tant que la partie n'est pas fini. Si le rapide est arrivé au bout d'un étage on change son mode d'action pour le faire faire demie tour. Même principe pour le surveillance s'il arrive au 9 étage ou au 0, on le fait faire demie tour
+
+
 */
 
 typedef struct Agent Agent;
@@ -431,7 +446,7 @@ int main(void) {
         else if(p.tour == 2)
         {
             //on continue la fouille et on attend la fin de la spé
-            fprintf(stdout, "MOVE %d 0 7\n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
+            fprintf(stdout, "SEARCH %d \n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
         }
         else
         { 
