@@ -4,11 +4,47 @@
 #define MAX_AGENT 8
 #define MAX_J 4
 
+/* Explication du code */
 /*
-Explication du code ici 
+    La stratégie mise en place est la suivante : 1 agent se spécialise en service de surveillance et l'autre reste en brigade rapide
+    tant qu'à un etage il y a un voleur détécté par le service de surveillance, l'agent en brigade rapide fait des aller retour de fouille chambre par chambre.
+    Quand il n'y a plus / pas de voleur a l'étage, l'agent de surveillance va monter ou descendre d'étage en fonction de sa situation. S'il est parti du bas il va jusqu'en 
+    haut étage par étage s'il n'y a pas de voleur à l'étage. Et arrivé en haut il redescend étage par étage en s'arrêtant s'il y a un ou plusieurs voleurs à l'étage.
+    Pour l'agent rapide. Quand il n'y a plus de voleur a l'étage, il retourne à l'escalier opposé à celui de l'autre agent et monte les étage comme l'autre agent (il le rejoint
+    à son étage). Et s'il y a un voleur à un étage il va fouiller l'étage jusqu'à ce qu'il n'y ai plus de voleur.
+ 
+    code :
+        Structure de données :
+            Les données sont organisés de la manière suivant (ma méthode est totalement inspiré de la programmation objet je m'en excuse) :
 
+            -Une structure partie stock l'ensemble des données de la partie. Elle contient des variables simples comme nombre de joueur, le nombre d'agents, le tour actuelle,
+            le numéro de mon joueur, le nombre de voleurs attrapé au total, le nombre de voleurs attrapés au dernier tour, le nombre de cases scellées au totale et le 
+            nombre de cases scellées au dernier tour. Elle contient de plus un pointeur vers une structure appellé InfosPub et un pointeur vers une structure
+            InfosPriv.
+
+            -InfosPub : Cette structure sert a receuillir les informations publique fournis chaque tour par le jeux. On retrouve donc dedans une tableau de pointeur vers des Joueur
+            (structure représentant un joueur), un tableau de pointeur vers des Agent (structure représentant des agents), un tableau d'entiers à 2 dimensions afin de stocker toutes 
+            les informations sur les voleurs, un tableau d'entier à 2 dimensions afin de stocker les informations sur les cases scellés mais aussi un tableau à double entrée qui doit servir 
+            à stocker l'ensemble des cases scellées.
+
+            -InfosPriv : Cette structure sert à receuillir les informations privés des joueurs. Celles qu'ils sont les seules à recevoir. Dans la structure on retrouve donc le nombre
+            d'agent de surveillance à un escalier d'étage et un tableau à 2 dimension d'entier qui va receuillir les informations transmises par la brigade de surveillance. Et on retrouve
+            le même principe pour la brigade scientifique.
+
+            -Joueur : Cette structure représente une joueurs. Son score, son id, ces points et aussi un tableau de 2 pointeurs vers des Agents qui sont censés être les siens
+
+            -Agent : Structure représentant un agent avec ces coordonnées actuelles, celles du tour précédent, sa spécialisation, son id et l'id du joueur auquel il appartient.
+
+            Donc une partie contient un pointeur vers une instance d'InfosPub et un pointeur vers une instance d'InfosPriv. InfosPub contient un tableau de <nombre de joueur> pointeur vers des instance de Joueur
+            et un tableau de <2 * nombre de joueurs> pointeurs vers des instances d'agents.
+
+            Au début de la partie on crée une instance de Partie une instance de InfosPub et une instance de InfosPriv, on récupère ensuite la première entrée qui donne le nombre de joueur et et notre numéros.
+            Avec cela on va pouvoir faire l'initialisatio de la structure Partie qui va pointer vers InfosPub et InfosPriv. Puis on va initialiser InfosPub qui va créer tous les agents et joueurs necessaire et pointer vers eux
+
+        
 
 */
+/***********************/
 
 typedef struct Agent Agent;
 typedef struct Joueur Joueur;
@@ -162,33 +198,7 @@ int CoordoEstValide(int x, int y){
     
 }
 
-int CoordoEstUneChambre(int x, int y){
-    /*
-        Retourne 1 si la coordonée est valide et elle coorespond à une chambre
-        les x représentent les étages, les chambres se retrouvent pour y entre 1 et 8
-        y = 9 et y = 0 représente un escalier
-        retourne 0 sinon
-    */
-   return CoordoEstValide(x, y) && (y >= 1 && y <= 8);
 
-}
-
-int CoordoEstUnEscalier(int x, int y){
-    /*
-        Retourne 1 si la coordo est valide et elle correspond à un escalier
-        retourne 0 sinon
-    */
-   return CoordoEstValide(x, y) && !(CoordoEstUneChambre(x, y));
-
-}
-
-int CoordoIdentique(int x1, int y1, int x2, int y2){
-    /*
-        Retourne 1 les coordo en paramètres sont identiques
-        retourne 0 sinon
-    */
-    return (x1 == x2) && (y1 == y2);
-}
 
 int MemeEtage(Agent* a1, Agent* a2){
     /*
@@ -316,7 +326,7 @@ void RecupererInputTour(Partie* p){
 
     RecupererInfosVoleursAttrapes(p->pub->infosVa, p->nbVoleursADT, p->nbVoleursA);
 
-    /**traiter les infos**/
+    /**traiter les infos (on augmente le nombre total de voleurs attrapés**/
     p->nbVoleursA = p->nbVoleursA + p->nbVoleursADT;
     /*********************/
 
@@ -324,7 +334,7 @@ void RecupererInputTour(Partie* p){
 
     RecupererInfosCasesScellees(p->pub->infosSDT, p->nbCasesSDT, p->nbCasesS);
 
-    /**traiter les infos**/
+    /**traiter les infos* (on augmente le nombre total de cases scellées)*/
     p->nbCasesS = p->nbCasesS + p->nbCasesSDT;
 
     /*********************/
@@ -333,14 +343,12 @@ void RecupererInputTour(Partie* p){
 
     RecupererInfosPriv(p->priv->infosSurv, p->priv->nbSurv);
 
-    /**traiter les infos**/
-    /*********************/
+
     RecupererEntier(&(p->priv->nbNI));
 
     RecupererInfosPriv(p->priv->infosNI, p->priv->nbNI);
 
-    /**traiter les infos**/
-    /*********************/
+
 }
 
 
@@ -389,12 +397,12 @@ int main(void) {
     Partie p;
     InfosPriv priv;
     InfosPub pub;
-    int fin; //variable pour détecter la fin du jeux
-    
+    /*Variable pour connaitre l'état des mouvements qu'on fait, si on va vers le haut, le bas, la gauche, la droite*/
     char mvtHo2[12] = "reculer";
     char mvtVer1[12] = "descendre";
     char action2[12] = "move";
 
+    /*Entiers qui serviront pour anticiper si la cases du prochain coup calculé sera valide*/
     int x1Suiv=0;
     int x2Suiv=0;
     int y1Suiv=0;
@@ -405,26 +413,23 @@ int main(void) {
     initP(&p);
     RecupererInit(&(p.nbJoueur), &(p.numeroJoueur));
     initPartie(&p, &priv, &pub);
-    afficherPartie(stderr, &p);
+    //afficherPartie(stderr, &p);
 
     
 
-    while(fin){
+    while(1){
         RecupererInputTour(&p);
         if(p.tour == 1){
-            fprintf(stderr, "tour = 1\n");
-            //tour 1 on va aller en haut pour les 2 agents
+            //tour 1 on specialise le premier agent et le 2eme commence a fouiller l'étage
             fprintf(stdout, "SPEC %d 3; MOVE %d 0 8 \n",  p.pub->infosJ[p.numeroJoueur]->agents[0]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
         }
         else if(p.tour == 2)
         {
-            fprintf(stderr, "tour = 2\n");
+            //on continue la fouille et on attend la fin de la spé
             fprintf(stdout, "MOVE %d 0 7\n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
-            /* On spé le premier agent en Surve*/
         }
         else
         { 
-            fprintf(stderr, "tour > 2\n");
             if(SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[0]) || SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[1])) //si un des 2 agents se spé on fait rien 
             {
                 fprintf(stderr, "spec in progress \n");
@@ -461,7 +466,7 @@ int main(void) {
                     }
                     else//si on est au même étage et y a un voleur mais a2 n'est pas dans l'escalier : deux cas de figure : fouiller ou aller a l'autre chambre
                     {
-                        if(strcmp(action2, "move") == 0){//au dernier tour on a moove, il faut fouiller
+                        if(strcmp(action2, "move") == 0){//au dernier tour on a move, il faut fouiller
                             //on verifie au cas ou qu'on est pas dans un escalier et que la coordo est valide (donc on est dans un chambre)
                             if (CoordoEstValide(p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0], p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1]) && !EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))
                             {
@@ -475,14 +480,14 @@ int main(void) {
                             }
 
                         }
-                        else//donc au dernier tour on a fouiller il faut move (si on est au bout et que la prochaine coordo est un escalier : il faut faire demie tour)
+                        else//donc au dernier tour on a fouiller il faut move (si on est au bout et que la prochaine coordo est un escalier : il faut faire demi tour)
                         {
                             if((p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] == 1) && (strcmp(mvtHo2, "reculer") == 0)){
-                                strcpy(mvtHo2, "avancer");//si on est au bout a gauche demie tour
+                                strcpy(mvtHo2, "avancer");//si on est au bout a gauche demi tour
                             }
                             else if ((p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] == 8) && (strcmp(mvtHo2, "avancer") == 0))
                             {
-                                strcpy(mvtHo2, "reculer");//si on est au bout a droite demie tour
+                                strcpy(mvtHo2, "reculer");//si on est au bout a droite demi tour
                             }
                             
                             if(strcmp(mvtHo2, "reculer") == 0){//si on recule
@@ -509,8 +514,8 @@ int main(void) {
                     }
                 }
                 else
-                {   //soit ya un voleur mais l'autre est pas au même étage => il 2 cas : est a lescaler donc doit rejoindre le bon etage ou est pas a l'escalier donc doit rejoindre l'escalier puis l'étage
-                    //soit y a pas de voleur dans ce cas il faut changer d'etage : avancer ou reculer mais si on est au bout faut faire demie tour
+                {   //soit y a un voleur mais l'autre est pas au même étage => 2 cas : est a l'escalier donc doit rejoindre le bon etage ou est pas a l'escalier donc doit rejoindre l'escalier puis l'étage
+                    //soit y a pas de voleur dans ce cas il faut changer d'etage : avancer ou reculer mais si on est au bout faut faire demi tour
                     if(VoleurAEtage(p.priv))//donc ce cas = il faut rejoindre à l'étage (ils sont pas au meme étage)
                     {
                         if(EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))//si l'agent 1 est dans l'escalier il doit juste le rejoindre
@@ -556,18 +561,15 @@ int main(void) {
                             fprintf(stdout, "MOVE %d %d 9; ", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0]);
                         }
                         fprintf(stdout, "MOVE %d %d %d \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id, x1Suiv, y1Suiv);
-                    }
-                    
+                    }                    
                 }
                 
             }
             
         }
         
-        
-        afficherPartie(stderr, &p);
+        //afficherPartie(stderr, &p);
         p.tour++;
-        fin = fin;
         fflush(stdout);
         fflush(stderr);
     }
