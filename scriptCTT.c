@@ -41,10 +41,15 @@
             Au début de la partie on crée une instance de Partie une instance de InfosPub et une instance de InfosPriv, on récupère ensuite la première entrée qui donne le nombre de joueur et et notre numéros.
             Avec cela on va pouvoir faire l'initialisatio de la structure Partie qui va pointer vers InfosPub et InfosPriv. Puis on va initialiser InfosPub qui va créer tous les agents et joueurs necessaire et pointer vers eux
 
-        
-
+        Algorithmique : L'algorithmique est assez simple. Pour l'aspect de stratégie de déplacement il n'y a pas de boucle. Ce ne sont que des accès simples, et des structures if else
+        (le tout dans une boucle pour chaque tour bien sûr)
+        C'est dans la récolte et le traitement des données au début des tours de jeux que les algorithme sont un peu plus complexe.
+        Commencons par l'initialisation des structure de données pour initialiser la partie il faut initialiser les infos publiques et privées. Pour initialiser les infos publiques
+        il faut faire des boucles pour instancier les joueurs et les agents. Leur allouer de la mémoire et faire pointer vers autant d'instances que necessaire (en fonction du nombre de joueurs de la partie)
+        pour instancier tous les joueurs il faut une boucle de <nb joueurs>. Pour les agents il faut une boucle de <2 * nbJoueurs> (max 2 agents par joueurs). Mais il faut aussi initialiser les tableau
+        pour les voleurs attrapés et les cases scellees donc on va se servir de la même boucle et on se retrouve avec un algorithme de complexité O(4n^2) (2x * 2x) mais sur un gros volume de données on
+        peut neglier les 4 * donc juste O(n^2)
 */
-/***********************/
 
 typedef struct Agent Agent;
 typedef struct Joueur Joueur;
@@ -155,7 +160,7 @@ void initPriv(InfosPriv* priv){
     for(int i = 0; i < 2; i++){
         for(int y = 0; y < 2; y++){
             priv->infosSurv[i][y] = -1;
-            priv->infosNI[i][y] = -1;
+            priv->infosNI[i][y] = -1;//comme je ne joue pas scientifique je n'ai pas vraiment besoin de ca
         }
     }
 }
