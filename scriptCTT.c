@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define MAX_AGENT 8
 #define MAX_J 4
+
+/*
+Explication du code ici 
+
+
+*/
 
 typedef struct Agent Agent;
 typedef struct Joueur Joueur;
@@ -82,18 +89,26 @@ void initJoueur(Joueur* j){
 }
 
 void initPub(InfosPub* pub, int nbJoueurs){
-    for(int i = 0; i < 2 * nbJoueurs; i++){
-        if((i%2) == 0){//une fois sur 2 on init un Joueur
-            Joueur* j = (Joueur*)malloc(sizeof(Joueur));
-            initJoueur(j);
-            pub->infosJ[i] = j;//on pointe la case du tableau vers le joueurs qu'on a init (et biensur il a sa memoire alloué)
-        }
+    for(int i = 0; i < nbJoueurs; i++){ 
+        Joueur* j = (Joueur*)malloc(sizeof(Joueur));
+        initJoueur(j);
+        pub->infosJ[i] = j;//on pointe la case du tableau vers le joueurs qu'on a init (et biensur il a sa memoire alloué)
         Agent* a = (Agent*)malloc(sizeof(Agent));
         initAgent(a);
         pub->infosA[i] = a;//même principe que pour les joueurs mais comme y a max 2 agents par joueurs on le fait a chaque fois
         for(int y = 0; y < 2 * nbJoueurs; y ++){
             pub->infosVa[i][y] = -1;
             pub->infosSDT[i][y] = -1;
+        }
+
+    }//arrivé on a fait que la moitier des agents (max) mais tous les joueurs
+    for(int i = 0; i < nbJoueurs; i ++){//donc on fait l'autre moitier des agents
+        Agent* a = (Agent*)malloc(sizeof(Agent));
+        initAgent(a);
+        pub->infosA[i + nbJoueurs] = a;//même principe que pour les joueurs mais comme y a max 2 agents par joueurs on le fait a chaque fois
+        for(int y = 0; y < 2 * nbJoueurs; y ++){
+            pub->infosVa[i + nbJoueurs][y] = -1;
+            pub->infosSDT[i + nbJoueurs][y] = -1;
         }
     }
 }
@@ -108,10 +123,22 @@ void initPriv(InfosPriv* priv){
         }
     }
 }
+void initP(Partie* p){
+    p->tour = 1;
+    p->nbJoueur = 0;
+    p->numeroJoueur = 0;
+    p->nbVoleursA = 0;
+    p->nbVoleursADT = 0;
+    p->nbCasesS = 0;
+    p->nbCasesSDT = 0;
+    p->priv = NULL;
+    p->pub = NULL;
+}
 
 void initPartie(Partie* p, InfosPriv* priv, InfosPub* pub){
     p->tour = 1;
     //on n'initie pas nbJoueurs et numeroJoueurs car elles ont deja été récoltées
+    p->nbAgent = 2 * p->nbJoueur;
     p->nbVoleursA = 0;
     p->nbVoleursADT = 0;
     p->nbCasesS = 0;
@@ -156,7 +183,64 @@ int CoordoEstUnEscalier(int x, int y){
 }
 
 int CoordoIdentique(int x1, int y1, int x2, int y2){
+    /*
+        Retourne 1 les coordo en paramètres sont identiques
+        retourne 0 sinon
+    */
     return (x1 == x2) && (y1 == y2);
+}
+
+int MemeEtage(Agent* a1, Agent* a2){
+    /*
+        Retourne 1 les agents a1 et a2 sans au même étage
+        retourne 0 sinon
+    */
+    return a1->coordoActu[0] == a2->coordoActu[0];
+}
+
+int EstDansEscalier(Agent* a){
+    /*
+        Retourne 1 l'agent a est dans un escalier
+        retourne 0 sinon
+    */
+    return (a->coordoActu[1] == 0) ||  (a->coordoActu[1] == 9);
+}
+
+int EtaitDansEscalier(Agent* a){
+    /*
+        Retourne 1 l'agent a etait dans un escalier au tour précédent
+        retourne 0 sinon
+    */
+    return (a->coordoPrec[1] == 0) ||  (a->coordoPrec[1] == 9);
+}
+
+int SpeInProgress(Agent* a){
+    /*
+        Retourne 1 si l'agent a est en cours de spécialisation
+        retourne 0 sinon
+    */
+    return a->spe == 0;
+}
+
+int VoleurAEtage(InfosPriv* priv){
+    /*
+        Retourne 1 s'il y a une voleur a notre étage
+        Obtenue grave aux infos privé avec un agent de surveillance
+        retourne 0 sinon
+    */
+    return (priv->infosSurv[0][NV] > 0);//dans notre strat il n'y a qu'un agent de surv donc pas besoin de faire attention pour ca quoi qu'il arrive sont on est pas a un tour ou on a pas encore spé
+}
+
+void RecupererAgents(Agent* agents[], Agent* agentsJoueur[2], int nbAgents, int idJ){
+    int agentTrouv = 0;
+    for(int i = 0; (i < nbAgents) && (agentTrouv < 2) ; i++){
+        if (agents[i]->idJoueur == idJ)//on a trouvé un agent qui a notre id de joueur
+        {
+            fprintf(stderr, "trouvé agent %d %d %p\n", agents[i]->idJoueur, idJ, agents[i]);
+            agentsJoueur[agentTrouv] = agents[i];//faire pointer notre pointeur de type agent vers notre agent
+            agentTrouv ++;
+        }
+    }
 }
 
 void RecupererInit(int *nbJoueur, int *numJoueur){
@@ -172,7 +256,7 @@ void RecupererEntier(int *n){
 void RecupererInfosJoueurs(Joueur* joueurs[], int nbJoueurs){
     /*Récuperer les informations relatives aux joueurs de la partie*/
     for(int i = 0; i < nbJoueurs; i++){
-        fscanf(stdin, "%d %d %d", &(joueurs[i]->numero), &(joueurs[i]->score), &(joueurs[i]->end));
+        fscanf(stdin, "%d %d %d", (&joueurs[i]->numero), &(joueurs[i]->score), &(joueurs[i]->end));
     }
 }
 
@@ -217,96 +301,61 @@ void RecupererInfosPriv(int infos[][2], int nbInfos){
 }
 
 
-void Recuperer3Infos(int nblignes, int infos[][3]){
-    /*Récuperer 3 entiers en entrée standard nblignes fois*/
-    for(int i = 0; i < nblignes; i++){
-        fscanf(stdin, "%d %d %d", &infos[i][0], &infos[i][1], &infos[i][2]);
-    }
-}
-
-void Recuperer5Infos(int nblignes, int infos[][5]){
-    /*Récuperer 5 entiers en entrée standard nblignes fois*/
-    for(int i = 0; i < nblignes; i++){
-        fscanf(stdin, "%d %d %d %d %d", &infos[i][0], &infos[i][1], &infos[i][2], &infos[i][3], &infos[i][4]);
-    }
-}
-
-void Recuperer2Infos(int nblignes, int infos[][2]){
-    /*Récuperer 2 entiers en entrée standard nblignes fois*/
-    for(int i = 0; i < nblignes; i++){
-        fscanf(stdin, "%d %d", &infos[i][0], &infos[i][1]);
-    }
-}
-
-
 void RecupererInputTour(Partie* p){
     /*Récuperer l'ensemble des input d'un tour*/
     RecupererInfosJoueurs(p->pub->infosJ, p->nbJoueur);
 
     RecupererEntier(&(p->nbAgent));
+
     RecupererInfosAgents(p->pub->infosA, p->nbAgent, p->tour);
-
-    /*associer le joueurs a ces agents*/
-
+    /*associer le joueur a ses agents*/
+    //on le fait a chaque tour car des agents sont retirés du jeux quand un joueurs a perdu / fini donc on mettra les infos d'agents dans un autre agent
+    RecupererAgents(p->pub->infosA, p->pub->infosJ[p->numeroJoueur]->agents, p->nbAgent, p->numeroJoueur);
+    /**********************************/
     RecupererEntier(&(p->nbVoleursADT));
+
     RecupererInfosVoleursAttrapes(p->pub->infosVa, p->nbVoleursADT, p->nbVoleursA);
+
     /**traiter les infos**/
     p->nbVoleursA = p->nbVoleursA + p->nbVoleursADT;
     /*********************/
 
     RecupererEntier(&(p->nbCasesSDT));
+
     RecupererInfosCasesScellees(p->pub->infosSDT, p->nbCasesSDT, p->nbCasesS);
+
     /**traiter les infos**/
     p->nbCasesS = p->nbCasesS + p->nbCasesSDT;
+
     /*********************/
 
     RecupererEntier(&(p->priv->nbSurv));
+
     RecupererInfosPriv(p->priv->infosSurv, p->priv->nbSurv);
+
     /**traiter les infos**/
     /*********************/
     RecupererEntier(&(p->priv->nbNI));
+
     RecupererInfosPriv(p->priv->infosNI, p->priv->nbNI);
+
     /**traiter les infos**/
     /*********************/
 }
 
-/*void RecupererInputTour(Partie* p, int infos[][5], int nj, int* na, int* nva, int* ns, int* surv, int* ni, int infosJ[][3], int infosA[][5], int infosVA[][2], int infosS[][2], int infosSurv[][2], int infosSci[][2]){
-    /*Récuperer l'ensemble des input d'un tour
-    Recuperer3Infos(p->nbJoueur, infos); //Récuperer infos joueurs
-    /*Traitement des infos sur les joueurs
-    /**************************************
-
-
-    RecupererEntier(na); //Récuperer nombre d'agents
-    Recuperer5Infos(*na, infosA); //Récuperer infos agents
-    RecupererEntier(nva); //Récuperer nombre de voleurs attrapés
-    Recuperer2Infos(*nva, infosVA); //Récuperer infos cases avec voleurs attrapés
-    RecupererEntier(ns); //Récuperer nombre de cases scellées
-    Recuperer2Infos(*ns, infosS); //Récuperer infos cases scellées
-    RecupererEntier(surv); //Récuperer nombre d'agents de surveillance du joueurs dans un escalier
-    Recuperer2Infos(*surv, infosSurv); //Récuperer infos nobres de voleurs situés à un étage d'agent de surv (qui est a l'escalier)
-    RecupererEntier(ni); //Récuperer nombre d'infos envoyées par police scientifique du joueur
-    Recuperer2Infos(*ni, infosSci); //Récuperer infos police scientifique
-    /*
-        pour gagner du temps on peut essayer de faire les différentes manipulation sur les données entre la réception des input
-        Ca evite de le faire apres quand le prog attend la réponse (on a 1 s pour répondre)
-    
-    
-
-}*/
 
 void afficherAgent(FILE* f, Agent* a){
     fprintf(f, "agent %p : %d | (%d,%d) | (%d, %d) | %d | %d\n", a, a->id, a->coordoPrec[0], a->coordoPrec[1], a->coordoActu[0], a->coordoActu[1], a->spe, a->idJoueur);
 }
 
 void afficherJoueur(FILE* f, Joueur* j){
-    fprintf(f, "joueur %p : %d | %d | %p | %p | %d", j, j->numero, j->score, j->agents[0], j->agents[1], j->end);
+    fprintf(f, "joueur %p : %d | %d | %p | %p | %d\n", j, j->numero, j->score, j->agents[0], j->agents[1], j->end);
 }
 
 void afficherTabDouble(FILE* f,int tab[][2], int dim){
     for(int i = 0; i < dim; i++){
         for(int y = 2; y < 2; y++){
-            fprintf(f, "%d |", tab[i][y]);
+            fprintf(f, "%d | ", tab[i][y]);
         }      
     }
     fprintf(f, "\n");
@@ -342,41 +391,55 @@ int main(void) {
     InfosPub pub;
     int fin; //variable pour détecter la fin du jeux
     //récupérer des entrées
+    char mvtHo1[12] = "reculer";
+    char mvtHo2[12] = "avancer";
+    char mvtVer1[12] = "descendre";
+    char mvtVer1[12] = "descendre";
+
+    
+    initP(&p);
     RecupererInit(&(p.nbJoueur), &(p.numeroJoueur));
     initPartie(&p, &priv, &pub);
+    afficherPartie(stderr, &p);
 
     /*A partir d'ici on a créer nbJoueur Joueur et 2*nbJoueur Agent
     *leurs pointeurs sont stockés dans les tableau correspondant dans pub
     */
 
-    /*fichier pour debug*/
-    FILE* fichier = NULL;
-    fichier = fopen("test.txt", "w");
-
-    if (fichier != NULL)
-        {
-            afficherPartie(fichier, &p);
-        }
-        else
-        {
-            fprintf(stderr, "erreur ouverture fichier\n");
-        }
+    
 
     while(fin){
         RecupererInputTour(&p);
-        fprintf(stdout, "PASS\n");
-        p.tour++;
-        fin = fin;
-        if (fichier != NULL)
+        if(p.tour == 1){
+            //tour 1 on va aller en haut pour les 2 agents
+            fprintf(stdout, "MOVE %d 9 0; MOVE %d 9 9 \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
+        }
+        else if(p.tour == 2)
         {
-            afficherPartie(fichier, &p);
+            fprintf(stdout, "SPEC %d 2; PASS \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id);
+            /* On spé le premier agent en Surve*/
         }
         else
-        {
-            fprintf(stderr, "erreur ouverture fichier\n");
+        { 
+            if(SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[0]) || SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[1])) //si un des 2 agents se spé on fait rien 
+            {
+                fprintf(stdout, "PASS \n");
+            }
+            else 
+            {
+                /* on attend que la spé soit fini puis on fouille étage par étage */
+                //on verifie qu'il y ai un voleur a l'étage
+                if(voleurAEtage())
+            }
+            
         }
         
         
+        afficherPartie(stderr, &p);
+        p.tour++;
+        fin = fin;
+        fflush(stdout);
+        fflush(stderr);
     }
 
 }
