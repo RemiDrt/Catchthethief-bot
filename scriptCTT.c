@@ -228,7 +228,7 @@ int VoleurAEtage(InfosPriv* priv){
         Obtenue grave aux infos privé avec un agent de surveillance
         retourne 0 sinon
     */
-    return (priv->infosSurv[0][NV] > 0);//dans notre strat il n'y a qu'un agent de surv donc pas besoin de faire attention pour ca quoi qu'il arrive sont on est pas a un tour ou on a pas encore spé
+    return (priv->infosSurv[0][1] > 0);//dans notre strat il n'y a qu'un agent de surv donc pas besoin de faire attention pour ca quoi qu'il arrive sont on est pas a un tour ou on a pas encore spé
 }
 
 void RecupererAgents(Agent* agents[], Agent* agentsJoueur[2], int nbAgents, int idJ){
@@ -390,46 +390,176 @@ int main(void) {
     InfosPriv priv;
     InfosPub pub;
     int fin; //variable pour détecter la fin du jeux
-    //récupérer des entrées
-    char mvtHo1[12] = "reculer";
-    char mvtHo2[12] = "avancer";
-    char mvtVer1[12] = "descendre";
-    char mvtVer1[12] = "descendre";
-
     
+    char mvtHo2[12] = "reculer";
+    char mvtVer1[12] = "descendre";
+    char action2[12] = "move";
+
+    int x1Suiv=0;
+    int x2Suiv=0;
+    int y1Suiv=0;
+    int y2Suiv=9;
+
+    //récupérer des entrées
+
     initP(&p);
     RecupererInit(&(p.nbJoueur), &(p.numeroJoueur));
     initPartie(&p, &priv, &pub);
     afficherPartie(stderr, &p);
-
-    /*A partir d'ici on a créer nbJoueur Joueur et 2*nbJoueur Agent
-    *leurs pointeurs sont stockés dans les tableau correspondant dans pub
-    */
 
     
 
     while(fin){
         RecupererInputTour(&p);
         if(p.tour == 1){
+            fprintf(stderr, "tour = 1\n");
             //tour 1 on va aller en haut pour les 2 agents
-            fprintf(stdout, "MOVE %d 9 0; MOVE %d 9 9 \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
+            fprintf(stdout, "SPEC %d 3; MOVE %d 0 8 \n",  p.pub->infosJ[p.numeroJoueur]->agents[0]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
         }
         else if(p.tour == 2)
         {
-            fprintf(stdout, "SPEC %d 2; PASS \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id);
+            fprintf(stderr, "tour = 2\n");
+            fprintf(stdout, "MOVE %d 0 7\n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id);
             /* On spé le premier agent en Surve*/
         }
         else
         { 
+            fprintf(stderr, "tour > 2\n");
             if(SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[0]) || SpeInProgress(p.pub->infosJ[p.numeroJoueur]->agents[1])) //si un des 2 agents se spé on fait rien 
             {
+                fprintf(stderr, "spec in progress \n");
                 fprintf(stdout, "PASS \n");
             }
             else 
             {
                 /* on attend que la spé soit fini puis on fouille étage par étage */
                 //on verifie qu'il y ai un voleur a l'étage
-                if(voleurAEtage())
+                if(VoleurAEtage(p.priv) && MemeEtage(p.pub->infosJ[p.numeroJoueur]->agents[0], p.pub->infosJ[p.numeroJoueur]->agents[1]))
+                {// à l'étage il y a un voleur et le 2eme agent est au même etage
+                    if (EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))//s'il l'agent etait dans l'escalier il recule (x = x - 1)
+                    {
+                        if(strcmp(mvtHo2, "reculer") == 0){//si on recule
+                            y2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] - 1;
+                            x2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0];
+                            x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0];
+                            y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                        }
+                        else{//si on avance (je le mets au cas ou mais je pense pas que j'arrivera dans ce cas de figure)
+                            y2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] + 1;
+                            x2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0];
+                            x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0];
+                            y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                        }
+                        if(CoordoEstValide(x2Suiv, y2Suiv)){
+                            fprintf(stdout, "MOVE %d %d %d\n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, x2Suiv, y2Suiv);
+                        }
+                        else{
+                            fprintf(stdout, "PASS\n");
+                            fprintf(stderr, "mauvaises coordo %d %d\n", x2Suiv, y2Suiv);    
+                        }
+                        
+                    }
+                    else//si on est au même étage et y a un voleur mais a2 n'est pas dans l'escalier : deux cas de figure : fouiller ou aller a l'autre chambre
+                    {
+                        if(strcmp(action2, "move") == 0){//au dernier tour on a moove, il faut fouiller
+                            //on verifie au cas ou qu'on est pas dans un escalier et que la coordo est valide (donc on est dans un chambre)
+                            if (CoordoEstValide(p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0], p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1]) && !EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))
+                            {
+                                fprintf(stdout, "SEARCH %d \n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id);// on fouille la chambre
+                                strcpy(action2, "search"); //pour savoir la dernière action qu'on a fait
+                            }
+                            else
+                            {
+                                fprintf(stdout, "PASS\n");
+                                fprintf(stderr, "mauvaises coordo/escalier %d %d\n", x2Suiv, y2Suiv);    
+                            }
+
+                        }
+                        else//donc au dernier tour on a fouiller il faut move (si on est au bout et que la prochaine coordo est un escalier : il faut faire demie tour)
+                        {
+                            if((p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] == 1) && (strcmp(mvtHo2, "reculer") == 0)){
+                                strcpy(mvtHo2, "avancer");//si on est au bout a gauche demie tour
+                            }
+                            else if ((p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] == 8) && (strcmp(mvtHo2, "avancer") == 0))
+                            {
+                                strcpy(mvtHo2, "reculer");//si on est au bout a droite demie tour
+                            }
+                            
+                            if(strcmp(mvtHo2, "reculer") == 0){//si on recule
+                                y2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] - 1;
+                                x2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0];
+                                x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0];
+                                y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                            }
+                            else{//si on avance (je le mets au cas ou mais je pense pas que j'arrivera dans ce cas de figure)
+                                y2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1] + 1;
+                                x2Suiv = p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0];
+                                x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0];
+                                y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                            }
+                            if(CoordoEstValide(x2Suiv, y2Suiv)){
+                                fprintf(stdout, "MOVE %d %d %d\n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, x2Suiv, y2Suiv);
+                                strcpy(action2, "move");
+                            }
+                            else{
+                                fprintf(stdout, "PASS\n");
+                                fprintf(stderr, "mauvaises coordo %d %d\n", x2Suiv, y2Suiv);    
+                            }
+                        }
+                    }
+                }
+                else
+                {   //soit ya un voleur mais l'autre est pas au même étage => il 2 cas : est a lescaler donc doit rejoindre le bon etage ou est pas a l'escalier donc doit rejoindre l'escalier puis l'étage
+                    //soit y a pas de voleur dans ce cas il faut changer d'etage : avancer ou reculer mais si on est au bout faut faire demie tour
+                    if(VoleurAEtage(p.priv))//donc ce cas = il faut rejoindre à l'étage (ils sont pas au meme étage)
+                    {
+                        if(EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))//si l'agent 1 est dans l'escalier il doit juste le rejoindre
+                        {
+                            //les coordos mises seront forcéments valides car elles proviennents de coordo d'agents
+                            fprintf(stdout, "MOVE %d %d %d \n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0], p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[1]); // je bouge en x (floor) donc je met la coordo de l'autre pour le rejoindre et en y ca bouge pas
+                        }
+                        else //on est pas à l'escalier et pas a l'etage de surv donc je dois rejoidre l'étage de surv pour ca je vais a l'escalier
+                        {
+                            //je vais au y de l'escalier et je bouge pas en x
+                            fprintf(stdout, "MOVE %d %d 9 \n", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0]);
+                        }
+                    }
+                    else// donc on est dans le cas ou on a pas de voleur a l'étage il faut descendre / monter ET le rapide doit soit rejoindre l'escalier, soit rejoindre l'étage
+                    {
+                        if( (p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0] == 9) && (strcmp(mvtVer1, "monter") == 0))//on monte mais on est déja au dernier étage 
+                        {
+                            strcpy(mvtVer1, "descendre");
+                        }
+                        else if( (p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0] == 0) && (strcmp(mvtVer1, "descendre") == 0))//on descend mais on est en bas
+                        {
+                            strcpy(mvtVer1, "monter");
+                        }
+
+                        if(strcmp(mvtVer1, "descendre") == 0)
+                        {
+                            x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0] - 1;
+                            y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                        }
+                        else
+                        {
+                            x1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[0] + 1;
+                            y1Suiv = p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1];
+                        }
+                        //l'agent surv va juste changer d'étage
+                        //pour l'agent rapide il y a plusieurs solution : soit il est a l'escalier et il doit rejoindre le même étage, soit il doit rejoindre l'escalier
+                        if (EstDansEscalier(p.pub->infosJ[p.numeroJoueur]->agents[1]))//cas ou il faut juste rejoindre le même étage
+                        {
+                            fprintf(stdout, "MOVE %d %d %d; ", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, x1Suiv, p.pub->infosJ[p.numeroJoueur]->agents[0]->coordoActu[1]); 
+                        }
+                        else
+                        {
+                            fprintf(stdout, "MOVE %d %d 9; ", p.pub->infosJ[p.numeroJoueur]->agents[1]->id, p.pub->infosJ[p.numeroJoueur]->agents[1]->coordoActu[0]);
+                        }
+                        fprintf(stdout, "MOVE %d %d %d \n", p.pub->infosJ[p.numeroJoueur]->agents[0]->id, x1Suiv, y1Suiv);
+                    }
+                    
+                }
+                
             }
             
         }
